@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Application</title>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to top, #d0f0fd, #ffe6f0); /* changed gradient */
+  font-family: 'Arial', sans-serif;
+}
+
+#gameArea {
+  width: 600px;
+  height: 250px;
+  background-color: #fff;
+  border: 2px solid #222;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Player */
+#hero {
+  width: 50px;
+  height: 50px;
+  background-image: url('https://cdn-icons-png.flaticon.com/512/2922/2922506.png');
+  background-size: cover;
+  position: absolute;
+  bottom: 0;
+  left: 50px;
+}
+
+/* Bottom obstacle */
+#floorObstacle {
+  width: 40px;
+  height: 30px;
+  background-color: grey;
+  position: absolute;
+  bottom: 0;
+  left: 600px;
+  animation: slideBottom 2s linear infinite;
+}
+
+/* Top obstacle (moves faster) */
+#ceilingObstacle {
+  width: 40px;
+  height: 60px;
+  background-color: grey;
+  position: absolute;
+  top: 0;
+  left: 600px;
+  animation: slideTop 1.7s linear infinite;
+}
+
+@keyframes slideBottom {
+  0% { left: 600px; }
+  100% { left: -40px; }
+}
+
+@keyframes slideTop {
+  0% { left: 600px; }
+  100% { left: -40px; }
+}
+
+/* Jump animation (slightly higher) */
+.jumpAnim {
+  animation: jumpAction 0.6s ease-out;
+}
+
+@keyframes jumpAction {
+  0% { bottom: 0; }
+  50% { bottom: 140px; } /* increased jump height */
+  100% { bottom: 0; }
+}
+
+/* Score display */
+#points {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 18px;
+}
+</style>
+</head>
+<body>
+
+<div id="gameArea">
+  <div id="points">Score: 0</div>
+  <div id="hero"></div>
+  <div id="floorObstacle"></div>
+  <div id="ceilingObstacle"></div>
+</div>
+
+<script>
+const hero = document.getElementById("hero");
+const floorObstacle = document.getElementById("floorObstacle");
+const ceilingObstacle = document.getElementById("ceilingObstacle");
+const pointsDisplay = document.getElementById("points");
+
+let heroPos = 50;
+let score = 0;
+let obstaclePassed = false;
+let attempts = 2;
+
+// Jump function
+function makeJump() {
+  if (!hero.classList.contains("jumpAnim")) {
+    hero.classList.add("jumpAnim");
+    setTimeout(() => hero.classList.remove("jumpAnim"), 600);
+  }
+}
+
+// Movement controls
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" || e.code === "ArrowUp") makeJump();
+  if (e.code === "ArrowLeft") heroPos -= 20;
+  if (e.code === "ArrowRight") heroPos += 20;
+
+  heroPos = Math.max(0, Math.min(550, heroPos));
+  hero.style.left = heroPos + "px";
+});
+
+// Game loop
+const gameTick = setInterval(() => {
+  const heroBottom = parseInt(getComputedStyle(hero).bottom);
+  const floorLeft = parseInt(getComputedStyle(floorObstacle).left);
+  const ceilingLeft = parseInt(getComputedStyle(ceilingObstacle).left);
+
+  // Collision detection
+  const hitBottom = heroBottom < 30 && floorLeft < heroPos + 50 && floorLeft + 40 > heroPos;
+  const hitTop = heroBottom > 120 && ceilingLeft < heroPos + 50 && ceilingLeft + 40 > heroPos;
+
+  if (hitBottom || hitTop) {
+    attempts--;
+    if (attempts > 0) {
+      alert("You lost a life! 1 life left: " );
+      floorObstacle.style.left = "600px";
+      ceilingObstacle.style.left = "600px";
+    } else {
+      alert("Game Over!!!!! Reload to restart the game");
+      clearInterval(gameTick);
+    }
+  }
+
+  // Scoring
+  if (floorLeft < 0 && !obstaclePassed) {
+    score++;
+    pointsDisplay.innerText = "Score: " + score;
+    obstaclePassed = true;
+  }
+  if (floorLeft > 500) obstaclePassed = false;
+
+}, 10);
+</script>
+</body>
+</html>
+
